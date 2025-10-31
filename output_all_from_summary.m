@@ -29,10 +29,17 @@ function output_all_from_summary(SampleList,input_dir,template,varargin)
         mkdir(output_dir)
         cd(output_dir)
         %%% plotting
-        if exist(output_dir+"/Summary.mat") == 2
-            load(output_dir+'/Summary.mat')
+        % if exist(output_dir+"/Summary.mat") == 2
+            % load(output_dir+'/Summary.mat')
 
-            save_dir='.';
+        if exist(fullfile(output_dir, 'Summary.mat'), 'file') == 2
+            loadedData = load(fullfile(output_dir, 'Summary.mat'));
+
+            summary = loadedData.summary;
+            params = loadedData.params;
+            thresholds = loadedData.thresholds;
+            
+            save_dir = '.';  
             generate_text_output(summary, params, thresholds, save_dir);
 
             % output actual CARLIN sequences
