@@ -13,6 +13,7 @@ function cfg = parse_config_file(cfg_type)
                                'BulkRNA_Tigre_14UMI';'BulkDNA_Tigre_14UMI';
                                'BulkRNA_Tigre_10UMI';'BulkDNA_Tigre_10UMI';
                                'scCamellia';
+                               'scParseSplitPipe';
                                }), ...
            'Unrecognized CFG Type');
     

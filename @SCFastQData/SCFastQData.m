@@ -12,6 +12,7 @@ classdef (Sealed=true) SCFastQData < FastQData
         [CB, UMI, QC] = parse_indrops_provenance(H)
         [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_10x_fastq(fastq_file, cfg);
         [CB, UMI, QC] = parse_10x_provenance(CB, QC, cfg);
+        [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_splitpipe_fastq(fastq_file, cfg);
         
     end
         
@@ -26,6 +27,8 @@ classdef (Sealed=true) SCFastQData < FastQData
                 [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = SCFastQData.parse_indrops_fastq(fastq_file);
             elseif(strcmp(cfg.SC.Platform, '10x') | strcmp(cfg.SC.Platform, 'scCamellia'))
                 [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = SCFastQData.parse_10x_fastq(fastq_file, cfg);            
+            elseif(strcmp(cfg.SC.Platform, 'Parse'))
+                [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = SCFastQData.parse_splitpipe_fastq(fastq_file, cfg);
             else
                 error('Unsupported SC Platform: %s', cfg.Platform);
             end

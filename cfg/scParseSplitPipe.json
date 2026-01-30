@@ -1,0 +1,22 @@
+{
+	"type": "SC",
+	"SC": {
+		"Platform": "Parse",
+		"Version": 1
+	},
+	"trim": {
+		"Primer5": "exact",
+		"Primer3": "ignore",
+		"SecondarySequence": "malformed"
+	},
+	"UMI" : {
+		"length" : 10
+	},
+	"CB" : [ {
+		"length" : 24
+	} ],
+	"read_perspective" : {
+		"ShouldComplement" : "N",
+		"ShouldReverse"	: "N"
+	}
+}
