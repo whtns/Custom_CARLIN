@@ -13,6 +13,7 @@ classdef (Sealed=true) SCFastQData < FastQData
         [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_10x_fastq(fastq_file, cfg);
         [CB, UMI, QC] = parse_10x_provenance(CB, QC, cfg);
         [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_splitpipe_fastq(fastq_file, cfg);
+        [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_preprocessed_h5(h5_file, cfg);
         
     end
         
@@ -23,7 +24,11 @@ classdef (Sealed=true) SCFastQData < FastQData
             assert(nargin >= 2, 'Expected two inputs to SCFastQDat constructor');
             
             assert(strcmp(cfg.type, 'SC'), 'Invalid CFG passed function');
-            if(strcmp(cfg.SC.Platform, 'InDrops'))
+            
+            % Check if input is preprocessed HDF5 file
+            if ischar(fastq_file) && endsWith(fastq_file, '.h5')
+                [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = SCFastQData.parse_preprocessed_h5(fastq_file, cfg);
+            elseif(strcmp(cfg.SC.Platform, 'InDrops'))
                 [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = SCFastQData.parse_indrops_fastq(fastq_file);
             elseif(strcmp(cfg.SC.Platform, '10x') | strcmp(cfg.SC.Platform, 'scCamellia'))
                 [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = SCFastQData.parse_10x_fastq(fastq_file, cfg);            
