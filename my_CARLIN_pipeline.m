@@ -37,12 +37,22 @@ function my_CARLIN_pipeline(SampleList,cfg_type,input_dir,output_dir,template,va
 
             analyze_CARLIN(char(sample_dir),char(sample_type), char(output_dir_1),'read_override_UMI_denoised',res.read_cutoff_UMI_override);
         elseif startsWith(cfg_type,'scCamellia') % we reverse R1 and R2 here
-            fastq_file = {sample_name+"_R2.fastq.gz", sample_name+"_R1.fastq.gz"};
+            preprocessed_h5 = sample_name+"_preprocessed.h5";
+            if isfile(preprocessed_h5)
+                fastq_file = char(preprocessed_h5);
+            else
+                fastq_file = {sample_name+"_R2.fastq.gz", sample_name+"_R1.fastq.gz"};
+            end
             analyze_CARLIN(fastq_file,char(sample_type), char(output_dir_1), ...
                 'read_override_CB_denoised',res.read_cutoff_CB_override,'read_override_UMI_denoised',res.read_cutoff_UMI_override);
         else
             % uinsg 10X etc
-            fastq_file = {sample_name+"_R1.fastq.gz", sample_name+"_R2.fastq.gz"};
+            preprocessed_h5 = sample_name+"_preprocessed.h5";
+            if isfile(preprocessed_h5)
+                fastq_file = char(preprocessed_h5);
+            else
+                fastq_file = {sample_name+"_R1.fastq.gz", sample_name+"_R2.fastq.gz"};
+            end
             analyze_CARLIN(fastq_file,char(sample_type), char(output_dir_1), ...
                 'read_override_CB_denoised',res.read_cutoff_CB_override,'read_override_UMI_denoised',res.read_cutoff_UMI_override);
         end

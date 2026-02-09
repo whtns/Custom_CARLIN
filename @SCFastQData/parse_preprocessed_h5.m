@@ -28,6 +28,20 @@ function [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_preproc
     UMI_raw = h5read(h5_file, '/umis');              % [N_UMI x UMI_length] uint8
     SEQ_raw = h5read(h5_file, '/sequences');         % [N_SEQ x max_seq_len] uint8
     QC_raw = h5read(h5_file, '/quality_scores');     % [N_SEQ x max_seq_len] uint8
+
+    % MATLAB may load HDF5 datasets with transposed dimensions; fix if needed
+    if size(CB_raw, 1) < size(CB_raw, 2)
+        CB_raw = CB_raw';
+    end
+    if size(UMI_raw, 1) < size(UMI_raw, 2)
+        UMI_raw = UMI_raw';
+    end
+    if size(SEQ_raw, 1) < size(SEQ_raw, 2)
+        SEQ_raw = SEQ_raw';
+    end
+    if size(QC_raw, 1) < size(QC_raw, 2)
+        QC_raw = QC_raw';
+    end
     
     % Read index arrays (uint32)
     read_CB = h5read(h5_file, '/read_to_cb');        % [N_reads] uint32 (0-indexed)
@@ -83,15 +97,31 @@ function [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_preproc
     end
     
     % Quality scores
-    QC = cell(size(QC_raw, 1), 1);
-    for i = 1:size(QC_raw, 1)
-        qc_bytes = QC_raw(i, :);
-        last_nonzero = find(qc_bytes ~= 0, 1, 'last');
-        if isempty(last_nonzero)
-            QC{i} = '';
-        else
-            QC{i} = char(qc_bytes(1:last_nonzero));
+    if size(QC_raw, 1) == length(read_CB)
+        % QC already per-read
+        QC = cell(size(QC_raw, 1), 1);
+        for i = 1:size(QC_raw, 1)
+            qc_bytes = QC_raw(i, :);
+            last_nonzero = find(qc_bytes ~= 0, 1, 'last');
+            if isempty(last_nonzero)
+                QC{i} = '';
+            else
+                QC{i} = char(qc_bytes(1:last_nonzero));
+            end
         end
+    else
+        % QC per-sequence; expand to per-read
+        QC = cell(size(QC_raw, 1), 1);
+        for i = 1:size(QC_raw, 1)
+            qc_bytes = QC_raw(i, :);
+            last_nonzero = find(qc_bytes ~= 0, 1, 'last');
+            if isempty(last_nonzero)
+                QC{i} = '';
+            else
+                QC{i} = char(qc_bytes(1:last_nonzero));
+            end
+        end
+        QC = QC(read_SEQ);
     end
     
     % Log metadata from HDF5 attributes if available
