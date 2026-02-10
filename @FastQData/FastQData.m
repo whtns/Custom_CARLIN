@@ -33,12 +33,28 @@ classdef (Abstract=true) FastQData < handle
     methods (Access = public)
         
         function obj = FastQData(source_files, Nreads, SEQ_raw, read_SEQ_raw, SEQ_trimmed, read_SEQ_trimmed, ...
-                                 UMI, read_UMI, QC, masks, trim_loc)
-                             
+                                 UMI, read_UMI, QC, masks, trim_loc, varargin)
+
+            % Parse optional memory optimization flag
+            p = inputParser;
+            addOptional(p, 'discard_raw_seqs', false, @islogical);
+            parse(p, varargin{:});
+            discard_raw = p.Results.discard_raw_seqs;
+
             obj.source_files = source_files;
             obj.Nreads = uint32(Nreads);
-            obj.SEQ_raw = cellfun(@nt2int, SEQ_raw, 'un', false);
-            obj.read_SEQ_raw = uint32(read_SEQ_raw);
+
+            % Conditional storage: keep SEQ_raw only if not discarding for memory optimization
+            if discard_raw
+                % Store empty arrays to save ~50% of sequence memory
+                obj.SEQ_raw = cell(0,1);
+                obj.read_SEQ_raw = uint32([]);
+                fprintf('Memory optimization: Discarded SEQ_raw (diagnostics/validation disabled)\n');
+            else
+                obj.SEQ_raw = cellfun(@nt2int, SEQ_raw, 'un', false);
+                obj.read_SEQ_raw = uint32(read_SEQ_raw);
+            end
+
             obj.SEQ_trimmed = cellfun(@nt2int, SEQ_trimmed, 'un', false);
             obj.read_SEQ_trimmed = uint32(read_SEQ_trimmed);
             

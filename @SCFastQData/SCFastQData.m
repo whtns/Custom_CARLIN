@@ -46,8 +46,14 @@ classdef (Sealed=true) SCFastQData < FastQData
             fprintf('Merging filters\n');
             fprintf('From %d reads, found valid (provenance,sequence,both) reads (%d,%d,%d) times\n', ...
                 Nreads, length(masks.valid_provenance_structure), length(masks.valid_SEQ_structure), length(masks.valid_lines));
-            
-            obj = obj@FastQData(fastq_file, Nreads, SEQ, read_SEQ, SEQ_trimmed, read_SEQ_trimmed, UMI, read_UMI, QC, masks, trim_loc);
+
+            % Check for memory optimization flag
+            discard_raw = false;
+            if isfield(cfg, 'memory_optimization') && isfield(cfg.memory_optimization, 'discard_raw_sequences')
+                discard_raw = cfg.memory_optimization.discard_raw_sequences;
+            end
+
+            obj = obj@FastQData(fastq_file, Nreads, SEQ, read_SEQ, SEQ_trimmed, read_SEQ_trimmed, UMI, read_UMI, QC, masks, trim_loc, 'discard_raw_seqs', discard_raw);
             obj.CB = CB;
             obj.read_CB = uint32(read_CB);
         end

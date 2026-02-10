@@ -13,6 +13,7 @@ function params = get_parameters(cfg)
     
     addParameter(params,'read_cutoff_UMI_denoised',10);
     addParameter(params,'read_override_UMI_denoised', NaN);
+    addParameter(params,'discard_raw_sequences', true, @islogical);
     
     if (strcmp(cfg.type, 'SC'))
         

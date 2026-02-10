@@ -16,14 +16,23 @@ function [valid_mask, ind] = trim_at_scrutiny_level(level, SEQ, trim_SEQ, which_
             end
             
         case 'malformed' % cares about whether the alignment is right or not.
-            
+
             N = size(SEQ,1);
             sc = zeros(N,1);
             al = cell(N,1);
-            parfor i = 1:N
-                if (~isempty(SEQ{i}))
-                    [sc(i), al{i}] = nwalign(trim_SEQ, SEQ{i}, 'Alphabet', 'NT', 'Glocal', true);
+            batch_size = 5000;
+            for batch_start = 1:batch_size:N
+                batch_end = min(batch_start + batch_size - 1, N);
+                batch_sc = zeros(batch_end - batch_start + 1, 1);
+                batch_al = cell(batch_end - batch_start + 1, 1);
+                batch_SEQ = SEQ(batch_start:batch_end);
+                parfor ii = 1:length(batch_SEQ)
+                    if (~isempty(batch_SEQ{ii}))
+                        [batch_sc(ii), batch_al{ii}] = nwalign(trim_SEQ, batch_SEQ{ii}, 'Alphabet', 'NT', 'Glocal', true);
+                    end
                 end
+                sc(batch_start:batch_end) = batch_sc;
+                al(batch_start:batch_end) = batch_al;
             end
             valid_mask = sc >= thresh;
             ind = cell(1,N);

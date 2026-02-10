@@ -122,8 +122,15 @@ function analyze_CARLIN(fastq_file, cfg_type, outdir, varargin)
     
     % Parse parameters
     cfg = parse_config_file(cfg_type);
-    params = get_parameters(cfg);    
+    params = get_parameters(cfg);
     parse(params, fastq_file, cfg_type, outdir, varargin{:});
+
+    % Wire memory optimization settings into cfg
+    cfg.memory_optimization.discard_raw_sequences = params.Results.discard_raw_sequences;
+    if cfg.memory_optimization.discard_raw_sequences
+        fprintf('Memory optimization: raw sequences will be discarded after trimming\n');
+    end
+
     clear fastq_file cfg_type outdir varargin
         
     % Setup directory and log file

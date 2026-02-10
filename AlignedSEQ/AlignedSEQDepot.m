@@ -17,9 +17,17 @@ classdef AlignedSEQDepot < handle
             N = size(SEQ,1);
             fprintf('Creating aligned CARLIN store with %d sequences\n', N);
             v = cell(N,1);
-            parfor i = 1:N
-                [~, v{i}] = CARLIN_def.cas9_align(SEQ{i});
-            end            
+            batch_size = 5000;
+            for batch_start = 1:batch_size:N
+                batch_end = min(batch_start + batch_size - 1, N);
+                batch_SEQ = SEQ(batch_start:batch_end);
+                batch_v = cell(length(batch_SEQ), 1);
+                parfor ii = 1:length(batch_SEQ)
+                    [~, batch_v{ii}] = CARLIN_def.cas9_align(batch_SEQ{ii});
+                end
+                v(batch_start:batch_end) = batch_v;
+                fprintf('  Aligned %d/%d sequences\n', batch_end, N);
+            end
             
             obj.unaligned_SEQ = SEQ;
             obj.aligned_SEQ = v;

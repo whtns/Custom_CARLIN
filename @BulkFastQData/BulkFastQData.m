@@ -11,15 +11,20 @@ classdef (Sealed=true) BulkFastQData < FastQData
     methods (Access = public)
     
         function obj = BulkFastQData(fastq_file, cfg)
-            
+
             assert(nargin == 2, 'Expected two inputs to BulkFastQData constructor');
-            
-            % Logical flow is a little convoluted because UMIs and CARLIN are part of the 
+
+            % Logical flow is a little convoluted because UMIs and CARLIN are part of the
             % same read and we still want to get good diagnostics out
-            
+
             % 1. Just get reads (SEQ=UMI+CARLIN), and QC
-            
-            [SEQ, read_SEQ, QC, Nreads] = BulkFastQData.parse_bulk_fastq(fastq_file, cfg);
+
+            % Check if input is HDF5 file (preprocessed) or raw FASTQ
+            if endsWith(fastq_file, '.h5') || endsWith(fastq_file, '.hdf5')
+                [SEQ, read_SEQ, QC, Nreads] = BulkFastQData.parse_preprocessed_h5(fastq_file, cfg);
+            else
+                [SEQ, read_SEQ, QC, Nreads] = BulkFastQData.parse_bulk_fastq(fastq_file, cfg);
+            end
             
             % 2. Trim out CARLIN based on Primer5 and Primer3 settings. 
             
@@ -39,8 +44,14 @@ classdef (Sealed=true) BulkFastQData < FastQData
             fprintf('Merging filters\n');
             fprintf('From %d reads, found valid (provenance,sequence,both) reads (%d,%d,%d) times\n', ...
                 Nreads, length(masks.valid_provenance_structure), length(masks.valid_SEQ_structure), length(masks.valid_lines));
-                        
-            obj = obj@FastQData(fastq_file, Nreads, SEQ, read_SEQ, SEQ_trimmed, read_SEQ_trimmed, UMI, read_UMI, QC, masks, trim_loc);
+
+            % Check for memory optimization flag
+            discard_raw = false;
+            if isfield(cfg, 'memory_optimization') && isfield(cfg.memory_optimization, 'discard_raw_sequences')
+                discard_raw = cfg.memory_optimization.discard_raw_sequences;
+            end
+
+            obj = obj@FastQData(fastq_file, Nreads, SEQ, read_SEQ, SEQ_trimmed, read_SEQ_trimmed, UMI, read_UMI, QC, masks, trim_loc, 'discard_raw_seqs', discard_raw);
             
         end
     end

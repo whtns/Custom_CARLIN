@@ -33,7 +33,12 @@ function my_CARLIN_pipeline(SampleList,cfg_type,input_dir,output_dir,template,va
         mkdir(output_dir_1)
 
         if startsWith(cfg_type,'Bulk')
-            sample_dir=sample_name+".trimmed.pear.assembled.fastq";
+            preprocessed_h5 = sample_name+"_preprocessed.h5";
+            if isfile(preprocessed_h5)
+                sample_dir = char(preprocessed_h5);
+            else
+                sample_dir = sample_name+".trimmed.pear.assembled.fastq";
+            end
 
             analyze_CARLIN(char(sample_dir),char(sample_type), char(output_dir_1),'read_override_UMI_denoised',res.read_cutoff_UMI_override);
         elseif startsWith(cfg_type,'scCamellia') % we reverse R1 and R2 here

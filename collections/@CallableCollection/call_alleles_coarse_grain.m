@@ -55,24 +55,22 @@ function [alleles, which_seqs, weight_contribution] = call_alleles_coarse_grain(
         % could do a more sophisticated length-dependent multialign, in practice it's
         % not worth the trouble just to include a few more reads.
         
-        if (length(unique(seq_lengths)) == 1)            
-            temp = repelem(seqs_for_event, seq_weights_for_event);
-            temp = vertcat(temp{:});
+        if (length(unique(seq_lengths)) == 1)
+            consensus = weighted_consensus(seqs_for_event, seq_weights_for_event);
             [~, ref_ind] = max(seq_weights_for_event);
-            alleles{i} = CARLIN_def.desemble_sequence(mode(temp,1), aligned_seqs{event_mask(ref_ind)}.get_ref());
+            alleles{i} = CARLIN_def.desemble_sequence(consensus, aligned_seqs{event_mask(ref_ind)}.get_ref());
             which_seqs{i} = valid_mask(event_mask);
             weight_contribution{i} = seq_weights_for_event;
         else
-            mode_length = mode(repelem(seq_lengths, seq_weights_for_event));
+            mode_length = weighted_mode_scalar(seq_lengths, seq_weights_for_event);
             length_mask = find(seq_lengths == mode_length);
             if (dominant_only && (N==1) && (sum(seq_weights_for_event(length_mask)) / sum(event_weight) <= dominant_frac))
                 break;
             end
-            temp = repelem(seqs_for_event(length_mask), seq_weights_for_event(length_mask));
-            temp = vertcat(temp{:});
+            consensus = weighted_consensus(seqs_for_event(length_mask), seq_weights_for_event(length_mask));
             [~, ref_ind] = max(seq_weights_for_event(length_mask));
-            ref_ind = length_mask(ref_ind);                    
-            alleles{i} = CARLIN_def.desemble_sequence(mode(temp,1), aligned_seqs{event_mask(ref_ind)}.get_ref());
+            ref_ind = length_mask(ref_ind);
+            alleles{i} = CARLIN_def.desemble_sequence(consensus, aligned_seqs{event_mask(ref_ind)}.get_ref());
             which_seqs{i} = valid_mask(event_mask(length_mask));
             weight_contribution{i} = seq_weights_for_event(length_mask);
         end
@@ -83,4 +81,28 @@ function [alleles, which_seqs, weight_contribution] = call_alleles_coarse_grain(
         which_seqs = which_seqs{1};
         weight_contribution = weight_contribution{1};
     end
+end
+
+function consensus = weighted_consensus(seqs, weights)
+    % Compute per-column consensus from weighted sequences without expansion.
+    % Instead of repelem+vertcat+mode (O(total_weight * seq_len)),
+    % uses weighted character frequencies (O(num_unique * seq_len)).
+    seq_mat = vertcat(seqs{:});
+    seq_len = size(seq_mat, 2);
+    consensus = blanks(seq_len);
+    for col = 1:seq_len
+        chars = seq_mat(:, col);
+        [uc, ~, ic] = unique(chars);
+        char_weights = accumarray(ic, weights);
+        [~, max_idx] = max(char_weights);
+        consensus(col) = uc(max_idx);
+    end
+end
+
+function m = weighted_mode_scalar(values, weights)
+    % Compute weighted mode of a numeric vector without expansion.
+    [uv, ~, ic] = unique(values);
+    val_weights = accumarray(ic, weights);
+    [~, max_idx] = max(val_weights);
+    m = uv(max_idx);
 end

@@ -250,13 +250,22 @@ end
 
 function sp = length_distribution(Nr, Nc, which_sp, FQ, summary, type)
 
-    L_raw_read     = accumarray(cellfun(@length, FQ.SEQ_raw)+1, accumarray(nonzeros(FQ.read_SEQ_raw), 1));
-    if (strcmp(type, 'UMI'))
-        raw_read_deduped = unique([FQ.read_SEQ_raw FQ.read_UMI], 'rows');        
+    % Check if SEQ_raw is available (may be discarded for memory optimization)
+    has_raw_data = ~isempty(FQ.SEQ_raw) && ~isempty(FQ.read_SEQ_raw);
+
+    if has_raw_data
+        L_raw_read     = accumarray(cellfun(@length, FQ.SEQ_raw)+1, accumarray(nonzeros(FQ.read_SEQ_raw), 1));
+        if (strcmp(type, 'UMI'))
+            raw_read_deduped = unique([FQ.read_SEQ_raw FQ.read_UMI], 'rows');
+        else
+            raw_read_deduped = unique([FQ.read_SEQ_raw FQ.read_CB FQ.read_UMI], 'rows');
+        end
+        L_raw_norm     = accumarray(cellfun(@length, FQ.SEQ_raw)+1, accumarray(nonzeros(raw_read_deduped(:,1)), 1));
     else
-        raw_read_deduped = unique([FQ.read_SEQ_raw FQ.read_CB FQ.read_UMI], 'rows');        
+        % Memory optimization mode: no raw data available
+        L_raw_read = [];
+        L_raw_norm = [];
     end
-    L_raw_norm     = accumarray(cellfun(@length, FQ.SEQ_raw)+1, accumarray(nonzeros(raw_read_deduped(:,1)), 1));
 
     L_trimmed_read = accumarray(cellfun(@length, FQ.SEQ_trimmed)+1, accumarray(nonzeros(FQ.read_SEQ_trimmed), 1));
     if (strcmp(type, 'UMI'))
@@ -279,25 +288,43 @@ function sp = length_distribution(Nr, Nc, which_sp, FQ, summary, type)
     else
         L_cell_norm = [];
     end
-    
-    L_raw_read     = L_raw_read     / sum(L_raw_read);
-    L_raw_norm     = L_raw_norm     / sum(L_raw_norm);
+
+    % Normalize distributions
+    if has_raw_data && ~isempty(L_raw_read)
+        L_raw_read = L_raw_read / sum(L_raw_read);
+        L_raw_norm = L_raw_norm / sum(L_raw_norm);
+    end
     L_trimmed_read = L_trimmed_read / sum(L_trimmed_read);
     L_trimmed_norm = L_trimmed_norm / sum(L_trimmed_norm);
     L_valid_read   = L_valid_read   / sum(L_valid_read);
     L_valid_norm   = L_valid_norm   / sum(L_valid_norm);
     L_cell_norm    = L_cell_norm    / sum(L_cell_norm);
-    
-    max_len = max([length(L_raw_read), ...
-                   length(L_raw_norm), ...
-                   length(L_trimmed_read), ... 
-                   length(L_trimmed_norm), ... 
-                   length(L_valid_read), ...
-                   length(L_valid_norm), ...
-                   length(L_cell_norm)]);
-               
-    L_raw_read     = [L_raw_read;     zeros(max_len-length(L_raw_read),    1)];
-    L_raw_norm     = [L_raw_norm;     zeros(max_len-length(L_raw_norm),    1)];
+
+    % Determine maximum length across all distributions
+    if has_raw_data
+        max_len = max([length(L_raw_read), ...
+                       length(L_raw_norm), ...
+                       length(L_trimmed_read), ...
+                       length(L_trimmed_norm), ...
+                       length(L_valid_read), ...
+                       length(L_valid_norm), ...
+                       length(L_cell_norm)]);
+    else
+        max_len = max([length(L_trimmed_read), ...
+                       length(L_trimmed_norm), ...
+                       length(L_valid_read), ...
+                       length(L_valid_norm), ...
+                       length(L_cell_norm)]);
+    end
+
+    % Pad all distributions to same length
+    if has_raw_data
+        L_raw_read     = [L_raw_read;     zeros(max_len-length(L_raw_read),    1)];
+        L_raw_norm     = [L_raw_norm;     zeros(max_len-length(L_raw_norm),    1)];
+    else
+        L_raw_read     = zeros(max_len, 1);
+        L_raw_norm     = zeros(max_len, 1);
+    end
     L_trimmed_read = [L_trimmed_read; zeros(max_len-length(L_trimmed_read),1)];
     L_trimmed_norm = [L_trimmed_norm; zeros(max_len-length(L_trimmed_norm),1)];
     L_valid_read   = [L_valid_read;   zeros(max_len-length(L_valid_read),  1)];
@@ -321,11 +348,16 @@ function sp = length_distribution(Nr, Nc, which_sp, FQ, summary, type)
     xlim([0, max_len-1]);
     
     set(gca, 'XAxisLocation', 'top', 'YAxisLocation', 'right', 'Ytick', [0.5:1:3.5], ...
-        'Yticklabels', {'Cell'; 'Valid'; 'Trimmed'; 'FASTQ'}); 
+        'Yticklabels', {'Cell'; 'Valid'; 'Trimmed'; 'FASTQ'});
     yrule = get(gca, 'YAxis');
     yrule.FontSize = 6;
     ytickangle(90);
     axis tight; box on;
+
+    % Add note if memory optimization is enabled (no raw data)
+    if ~has_raw_data
+        title('Length Distribution (Memory Opt: No Raw Data)', 'FontSize', 8);
+    end
 end
 
 function sp = UMI_composition_all(Nr, Nc, which_sp, FQ, summary)
