@@ -100,7 +100,7 @@ classdef Mutation
            
            [obj, s, e] = regexp(str, '(?<loc_start>\d+)(?<seq_old>[ACGT])>(?<seq_new>[ACGT])', 'names');
            if (~isempty(s) && ~isempty(e) && s == 1 && e == L)                              
-               obj.loc_start = str2num(obj.loc_start);
+               obj.loc_start = str2double(obj.loc_start);
                assert(obj.loc_start >= 1 && obj.loc_start <= ref.width.CARLIN);
                obj.loc_end = obj.loc_start;
                obj.type = 'M';
@@ -110,8 +110,8 @@ classdef Mutation
            
            [obj, s, e] = regexp(str, '(?<loc_start>\d+)_(?<loc_end>\d+)delins(?<seq_new>[ACGT]+)', 'names');           
            if (~isempty(s) && ~isempty(e) && s == 1 && e == L)
-               obj.loc_start = str2num(obj.loc_start);
-               obj.loc_end = str2num(obj.loc_end);
+               obj.loc_start = str2double(obj.loc_start);
+               obj.loc_end = str2double(obj.loc_end);
                assert(obj.loc_start >= 1 && obj.loc_start <= obj.loc_end && obj.loc_end <= ref.width.CARLIN);
                obj.seq_old = ref.seq.CARLIN(obj.loc_start:obj.loc_end);               
                assert(obj.seq_old(1) ~= obj.seq_new(1) && obj.seq_old(end) ~= obj.seq_new(end));                
@@ -125,8 +125,8 @@ classdef Mutation
            
            [obj, s, e] = regexp(str, '(?<loc_start>\d+)_(?<loc_end>\d+)ins(?<seq_new>[ACGT]+)', 'names');
            if (~isempty(s) && ~isempty(e) && s == 1 && e == L)
-               obj.loc_start = str2num(obj.loc_start);
-               obj.loc_end = str2num(obj.loc_end);
+               obj.loc_start = str2double(obj.loc_start);
+               obj.loc_end = str2double(obj.loc_end);
                assert(obj.loc_start >= 0 && obj.loc_end==obj.loc_start+1 && obj.loc_end <= ref.width.CARLIN+1);
                insert_left = obj.loc_start==0 || ismembc(obj.loc_start, ref.bounds.consites(:,2));
                if (insert_left)
@@ -147,8 +147,8 @@ classdef Mutation
            
            [obj, s, e] = regexp(str, '(?<loc_start>\d+)_(?<loc_end>\d+)del', 'names');
            if (~isempty(s) && ~isempty(e) && s == 1 && e == L)
-               obj.loc_start = str2num(obj.loc_start);
-               obj.loc_end = str2num(obj.loc_end);
+               obj.loc_start = str2double(obj.loc_start);
+               obj.loc_end = str2double(obj.loc_end);
                assert(obj.loc_start >= 1 && obj.loc_start <= obj.loc_end && obj.loc_end <= ref.width.CARLIN);
                obj.seq_old = ref.seq.CARLIN(obj.loc_start:obj.loc_end);               
                obj.seq_new = repmat('-', [1 length(obj.seq_old)]);

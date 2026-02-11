@@ -26,13 +26,11 @@ function [CB, read_CB, UMI, read_UMI, SEQ, read_SEQ, QC, Nreads] = parse_indrops
         Nreads{i} = Nreads{i}.NumberOfEntries;
         fprintf('Reads in FASTQ: %d\n', Nreads{i});
 
-        H = cell(Nreads{i},1);    
-        [H(:,1), ~, ~] = fastqread(fastq_file{i});    
-        [CB{i}, UMI{i}, QC{i}] = SCFastQData.parse_indrops_provenance(H); 
+        [H, SEQ{i}, ~] = fastqread(fastq_file{i});
+        H = H(:);
+        [CB{i}, UMI{i}, QC{i}] = SCFastQData.parse_indrops_provenance(H);
         clear H;
-
-        SEQ{i} = cell(Nreads{i}, 1);
-        [~, SEQ{i}(:,1), ~] = fastqread(fastq_file{i});
+        SEQ{i} = SEQ{i}(:);
         
         FastQData.maybe_clear_unzipped(fastq_file{i}, ext);
         

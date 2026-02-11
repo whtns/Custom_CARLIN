@@ -58,14 +58,18 @@ function [SEQ_trimmed, read_SEQ_trimmed, masks, trim_loc] = extract_CARLIN_from_
     end
     read_SEQ_trimmed = read_SEQ_trimmed(read_SEQ_raw);                                                        
 
-    masks.CARLIN_match              = uint32(find(ismember(read_SEQ_raw, find(masks.CARLIN_match))));
-    masks.valid_5_primer            = uint32(find(ismember(read_SEQ_raw, find(masks.valid_5_primer))));
-    masks.valid_3_primer            = uint32(find(ismember(read_SEQ_raw, find(masks.valid_3_primer))));
-    masks.valid_2_seq               = uint32(find(ismember(read_SEQ_raw, find(masks.valid_2_seq))));
-    masks.valid_read_structure      = uint32(find(ismember(read_SEQ_raw, find(masks.valid_read_structure))));
-    masks.trimmed_SEQ_long_enough   = uint32(find(ismember(read_SEQ_raw, find(masks.trimmed_SEQ_long_enough))));
-    masks.SEQ_no_N                  = uint32(find(ismember(read_SEQ_raw, find(masks.SEQ_no_N))));
-    masks.valid_SEQ_structure       = uint32(find(ismember(read_SEQ_raw, find(masks.valid_SEQ_structure))));
+    mask_names = {'CARLIN_match','valid_5_primer','valid_3_primer','valid_2_seq',...
+                  'valid_read_structure','trimmed_SEQ_long_enough','SEQ_no_N','valid_SEQ_structure'};
+    n_unique = max(read_SEQ_raw);
+    unique_seq_mask = false(n_unique, 8);
+    for k = 1:8
+        m = masks.(mask_names{k});
+        unique_seq_mask(find(m), k) = true;
+    end
+    read_passes = unique_seq_mask(read_SEQ_raw, :);
+    for k = 1:8
+        masks.(mask_names{k}) = uint32(find(read_passes(:,k)));
+    end
 
     N = length(read_SEQ_raw);
 

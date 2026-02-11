@@ -6,25 +6,29 @@ function event_list = identify_Cas9_events(aligned)
     ref = CARLIN_def.getInstance;
     
     if (~isempty(mut_list))        
-        compound = zeros(0,2);
+        compound = zeros(size(mut_list,1), 2);
+        n_compound = 0;
         compound_start = 1;
         compound_end = 1;
-        for i = 2:size(mut_list,1)        
+        for i = 2:size(mut_list,1)
             start_loc_bp = mut_list(i).loc_start;
-            end_loc_bp   = mut_list(compound_end).loc_end;            
+            end_loc_bp   = mut_list(compound_end).loc_end;
             so_far_site = CARLIN_def.locate(ref, end_loc_bp , ref.bounds.ordered);
-            new_site    = CARLIN_def.locate(ref, start_loc_bp, ref.bounds.ordered);        
+            new_site    = CARLIN_def.locate(ref, start_loc_bp, ref.bounds.ordered);
             if ((start_loc_bp == end_loc_bp+1) || (new_site.abs == so_far_site.abs) || ...
                 (new_site.abs==so_far_site.abs+1 && strcmp(so_far_site.type, 'cutsites')) || ...
                 start_loc_bp < end_loc_bp)
                 compound_end = i;
             else
-                compound = [compound; [compound_start compound_end]];
+                n_compound = n_compound + 1;
+                compound(n_compound,:) = [compound_start compound_end];
                 compound_start = i;
                 compound_end = i;
             end
-        end       
-        compound = [compound; compound_start compound_end];
+        end
+        n_compound = n_compound + 1;
+        compound(n_compound,:) = [compound_start compound_end];
+        compound = compound(1:n_compound,:);
         event_list = cell(size(compound,1),1);        
         for i = 1:size(event_list,1)
             if (compound(i,1) == compound(i,2))

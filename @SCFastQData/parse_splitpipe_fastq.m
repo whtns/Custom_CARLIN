@@ -138,25 +138,22 @@ function [CB, UMI] = parse_splitpipe_headers(headers, cb_length, umi_length)
     % Parse all headers
     pattern = patterns{matched_pattern};
     
-    for i = 1:n_reads
-        tokens = regexp(headers{i}, pattern, 'tokens', 'once');
-        
-        if isempty(tokens) || length(tokens) < 2
-            % Mark as invalid - will be filtered later
-            CB{i} = repmat('N', 1, cb_length);
-            UMI{i} = repmat('N', 1, umi_length);
-        else
-            CB{i} = tokens{1};
-            UMI{i} = tokens{2};
-            
-            % Validate lengths
-            if length(CB{i}) ~= cb_length
-                CB{i} = repmat('N', 1, cb_length);
-            end
-            if length(UMI{i}) ~= umi_length
-                UMI{i} = repmat('N', 1, umi_length);
-            end
-        end
-    end
+    % Vectorized regexp on entire cell array
+    all_tokens = regexp(headers, pattern, 'tokens', 'once');
+    valid = ~cellfun(@isempty, all_tokens);
+
+    % Extract CB and UMI from valid tokens
+    CB(valid) = cellfun(@(t) t{1}, all_tokens(valid), 'un', false);
+    UMI(valid) = cellfun(@(t) t{2}, all_tokens(valid), 'un', false);
+
+    % Fill invalid entries with N-pads
+    CB(~valid) = {repmat('N', 1, cb_length)};
+    UMI(~valid) = {repmat('N', 1, umi_length)};
+
+    % Validate lengths - replace wrong-length entries
+    bad_cb = cellfun(@length, CB) ~= cb_length;
+    bad_umi = cellfun(@length, UMI) ~= umi_length;
+    CB(bad_cb) = {repmat('N', 1, cb_length)};
+    UMI(bad_umi) = {repmat('N', 1, umi_length)};
 
 end

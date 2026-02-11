@@ -33,9 +33,11 @@ function [mut_list, bp_event, seq, ref_seq, ref_mask] = identify_sequence_events
     del_mask = seq(ref_mask) == '-';
     bp_event(del_mask) = 'D';
     
-    mut_list = {};
+    parts = cell(6,1);
+    np = 0;
     if (~isempty(del))
-        mut_list = arrayfun(@(bi,ei) Mutation('D', which_bp(bi), which_bp(ei), ...
+        np = np+1;
+        parts{np} = arrayfun(@(bi,ei) Mutation('D', which_bp(bi), which_bp(ei), ...
                                                repmat('-', [1, ei-bi+1]), ref_seq(bi:ei)), del(:,1), del(:,2), 'un', false);
     end
     
@@ -52,40 +54,49 @@ function [mut_list, bp_event, seq, ref_seq, ref_mask] = identify_sequence_events
     bp_event(frag_ind(~is))  = 'I';
     
     if (~isempty(frag_ind(is)))
-        mut_list = [mut_list; arrayfun(@(i) Mutation('I', i+1, i+1, ...
+        np = np+1;
+        parts{np} = arrayfun(@(i) Mutation('I', i+1, i+1, ...
                                                      seq(ref_mask(i)+1:ref_mask(i+1)), ...
                                                      [repmat('-', [1, frag_length(i)]) ref_seq(ref_mask(i+1))]), ...
-                                                     frag_ind(is), 'un', false)'];
+                                                     frag_ind(is), 'un', false)';
     end
-    
+
     if (~isempty(frag_ind(~is)))
-        mut_list = [mut_list; arrayfun(@(i) Mutation('I', i, i, ...                                       
+        np = np+1;
+        parts{np} = arrayfun(@(i) Mutation('I', i, i, ...
                                                      seq(ref_mask(i):ref_mask(i+1)-1), ...
                                                      [ref_seq(ref_mask(i)) repmat('-', [1, frag_length(i)])]), ...
-                                                     frag_ind(~is), 'un', false)'];
+                                                     frag_ind(~is), 'un', false)';
     end
         
     % Leading insertion
     if (ref_mask(1)~=1)
         bp_event(1) = 'I';
-        mut_list = [mut_list; {Mutation('I', 1, 1, ...                                       
+        np = np+1;
+        parts{np} = {Mutation('I', 1, 1, ...
                                seq(1:ref_mask(1)), ...
-                               [repmat('-', [1, ref_mask(1)-1]) ref_seq(ref_mask(1))])}];
+                               [repmat('-', [1, ref_mask(1)-1]) ref_seq(ref_mask(1))])};
     end
-    
+
     % Trailing insertion
     if (ref_mask(end)~=length(seq))
         bp_event(end) = 'I';
-        mut_list = [mut_list; {Mutation('I', ref.width.CARLIN, ref.width.CARLIN, ...                                       
+        np = np+1;
+        parts{np} = {Mutation('I', ref.width.CARLIN, ref.width.CARLIN, ...
                                         seq(ref_mask(end):end), ...
-                                        [ref_seq(ref_mask(end)) repmat('-', [1, length(seq)-ref_mask(end)])])}];
+                                        [ref_seq(ref_mask(end)) repmat('-', [1, length(seq)-ref_mask(end)])])};
     end
     
     % 4. Tag substituted bps
         
-    bp_event(seq(ref_mask)~=ref_seq(ref_mask) & bp_event=='N') = 'M';    
-    mut_list = [mut_list; arrayfun(@(i) Mutation('M', i, i, seq(ref_mask(i)), ref.seq.CARLIN(i)), find(bp_event=='M'), 'un', false)'];
-    
+    bp_event(seq(ref_mask)~=ref_seq(ref_mask) & bp_event=='N') = 'M';
+    sub_idx = find(bp_event=='M');
+    if (~isempty(sub_idx))
+        np = np+1;
+        parts{np} = arrayfun(@(i) Mutation('M', i, i, seq(ref_mask(i)), ref.seq.CARLIN(i)), sub_idx, 'un', false)';
+    end
+
+    mut_list = vertcat(parts{1:np});
     if (~isempty(mut_list))
         mut_list = vertcat(mut_list{:});
         [~, idx] = sortrows([vertcat(mut_list.loc_start), vertcat(mut_list.loc_end)], [1, 2]);
