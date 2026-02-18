@@ -202,7 +202,11 @@ function analyze_CARLIN(fastq_file, cfg_type, outdir, varargin)
         fprintf('Generating allele plot\n');
 
         warning('off', 'MATLAB:hg:AutoSoftwareOpenGL');
-        plot_summary(summary, params.Results.outdir);
+        try
+            plot_summary(summary, params.Results.outdir);
+        catch plot_err
+            fprintf('Warning: allele plot failed (%s); continuing without plot.\n', plot_err.message);
+        end
 
 %         fprintf('Generating diagnostic plot\n');
 %         if (strcmp(cfg.type, 'Bulk'))    
