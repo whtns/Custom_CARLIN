@@ -39,10 +39,12 @@ function params = get_parameters(cfg)
             end
         elseif (strcmp(cfg.SC.Platform, 'scCamellia'))
             if (cfg.SC.Version==1)
-                addParameter(params, 'ref_CB_file', sprintf('%s/scCamellia_barcodes.txt.gz', folder));            
+                addParameter(params, 'ref_CB_file', sprintf('%s/scCamellia_barcodes.txt.gz', folder));
             else
                 error('Unsupported scCamellia version');
             end
+        elseif (strcmp(cfg.SC.Platform, 'Parse'))
+            addParameter(params, 'ref_CB_file', sprintf('%s/parse_barcodes.txt.gz', folder));
         else
             error('Unsupported SingleCell platform');
         end

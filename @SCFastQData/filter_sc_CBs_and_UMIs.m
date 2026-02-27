@@ -18,7 +18,10 @@ function masks = filter_sc_CBs_and_UMIs(cfg, CB, read_CB, UMI, read_UMI, QC)
         masks.UMI_correct_length = cellfun(@(x) length(x) == cfg.UMI.length, UMI);        
     elseif(strcmp(cfg.SC.Platform, '10x') | strcmp(cfg.SC.Platform, 'scCamellia'))
         masks.CB_correct_length = cellfun(@(x) length(x) == cfg.CB.length, CB);
-        masks.UMI_correct_length = cellfun(@(x) length(x) == cfg.UMI.length, UMI);        
+        masks.UMI_correct_length = cellfun(@(x) length(x) == cfg.UMI.length, UMI);
+    elseif(strcmp(cfg.SC.Platform, 'Parse'))
+        masks.CB_correct_length = cellfun(@(x) length(x) == cfg.CB(1).length, CB);
+        masks.UMI_correct_length = cellfun(@(x) length(x) == cfg.UMI.length, UMI);
     end
 
     masks.CB_correct_length = masks.CB_correct_length(read_CB);
