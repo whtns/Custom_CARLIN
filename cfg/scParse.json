@@ -2,7 +2,7 @@
 	"type": "SC",
 	"SC": {
 		"Platform": "Parse",
-		"Version": 1
+		"Version": 2
 	},
 	"trim": {
 		"Primer5": "exact",
@@ -10,7 +10,7 @@
 		"SecondarySequence": "malformed"
 	},
 	"UMI" : {
-		"length" : 10
+		"length" : 8
 	},
 	"CB" : [ {
 		"length" : 24
