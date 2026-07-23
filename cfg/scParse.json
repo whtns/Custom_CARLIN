@@ -10,7 +10,7 @@
 		"SecondarySequence": "malformed"
 	},
 	"UMI" : {
-		"length" : 8
+		"length" : 10
 	},
 	"CB" : [ {
 		"length" : 24
